@@ -25,6 +25,11 @@ class MyApp extends StatelessWidget {
       ),
       builder: (BuildContext context, Widget fragment) => Scaffold(
         appBar: AppBar(
+          leading: Builder(builder: (BuildContext context) => IconButton( // https://stackoverflow.com/a/61353585/2808520
+              icon: const Icon(Icons.menu),
+              onPressed: () { Scaffold.of(context).openDrawer(); }
+            )
+          ),
           title: Text("Paradeiser"),
         ),
         drawer: Drawer(
@@ -36,8 +41,7 @@ class MyApp extends StatelessWidget {
               ListTile(
                 title: Text("Pomodoro timer"),
                 onTap: () {
-                  fragmentNavigatorKey.currentState.popUntil((route) => 
-                    !fragmentNavigatorKey.currentState.canPop());
+                  fragmentNavigatorKey.currentState.popAndPushNamed('/');
                 },
               ),
               ListTile(
