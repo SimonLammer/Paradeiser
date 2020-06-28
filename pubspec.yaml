@@ -29,6 +29,12 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.3
 
+  # https://pub.dev/packages/searchable_dropdown#-readme-tab-
+  searchable_dropdown:
+
+  # https://pub.dev/packages/material_design_icons_flutter
+  material_design_icons_flutter: 4.0.5345
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
