@@ -2,8 +2,12 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:tuple/tuple.dart';
 
 import '../_util.dart';
+import '../../controllers/timer.dart';
+import '../widgets/stream_listenable_adapter.dart';
 
 class CircularTimer1 extends StatefulWidget {
   final double circleThickness;
@@ -24,10 +28,20 @@ class _CircularTimer1State extends State<CircularTimer1> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        CustomPaint(
-          painter: CircularTimer1Painter(
-            circleThickness: widget.circleThickness
-          )
+        Consumer<TimerController>(
+          builder: (context, timerController, _) =>
+            StreamListenableAdapter(
+              stream: timerController.periodicUnitDurationStream(Duration(milliseconds: 100)),
+              initialData: timerController.currentUnitDurationTuple,
+              builder: (context, notifier) =>
+                CustomPaint(
+                  painter: CircularTimer1Painter(
+                    timerController: timerController,
+                    circleThickness: widget.circleThickness,
+                    repaint: notifier,
+                  ),
+                ),
+            ),
         ),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -38,7 +52,18 @@ class _CircularTimer1State extends State<CircularTimer1> {
               padding: EdgeInsets.all(padding),
               child: FittedBox(
                 fit: BoxFit.fitWidth,
-                child: Text("13:59")
+                child: Consumer<TimerController>(
+                  builder: (context, timerController, _) =>
+                    StreamBuilder(
+                      stream: timerController.unitStream,
+                      builder: (__, ___) => StreamBuilder(
+                        initialData: timerController.currentUnitDurationTuple,
+                        stream: timerController.periodicUnitDurationStream(Duration(seconds: 1)),
+                        builder: (context, AsyncSnapshot<Tuple3<Duration, Duration, Duration>> snapshot) {print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
+                        return Text(DateTime.now().toIso8601String());} //formatDuration_mm_ss(snapshot.data.item1));}
+                      ),
+                    ),
+                ),
               ),
             );
           }
@@ -49,15 +74,19 @@ class _CircularTimer1State extends State<CircularTimer1> {
 }
 
 class CircularTimer1Painter extends CustomPainter {
+  final TimerController timerController;
   final double circleThickness;
   final Color backgroundColor;
   final Color foregroundColor;
+  final Listenable repaint;
 
   CircularTimer1Painter({
+    @required this.timerController,
     this.circleThickness,
     this.foregroundColor = Colors.grey,
     this.backgroundColor = Colors.black87,
-  }) : super();
+    this.repaint,
+  }) : super(repaint: repaint);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -83,7 +112,7 @@ class CircularTimer1Painter extends CustomPainter {
     ;
     canvas.drawPath(
       Path()
-        ..arcTo(square.deflate(circleThickness / 2), -pi/2, pi, true),
+        ..arcTo(square.deflate(circleThickness / 2), -pi/2, min(timerController.progress, 1.0) * pi * 2.0, true), // TODO: fix arc disappearance on 2*pi length
       paint);
   }
 
