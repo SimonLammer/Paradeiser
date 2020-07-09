@@ -24,10 +24,12 @@ class Unit {
 
   Unit({
     this.plan
-  });
+  }) {
+    assert(plan != null);
+  }
 
   void dispose() {
-    cancel();
+    cancel() || stop();
     _stateChangeStreamController.close();
   }
 
@@ -36,6 +38,7 @@ class Unit {
 
   Duration get passedDuration => _stopwatch.elapsed;
   Duration get remainingDuration => plan.duration - _stopwatch.elapsed;
+  Duration get overtimeDuration => _stopwatch.elapsed - plan.duration;
 
   double get progress => passedDuration.inMilliseconds / plan.duration.inMilliseconds;
 
@@ -63,7 +66,6 @@ class Unit {
     if (remainingDuration > Duration.zero) {
       _timer = Timer(remainingDuration, _timerCallback);
     } else {
-      _stopwatch.stop();
       _state = UnitState.overtime;
     }
   }

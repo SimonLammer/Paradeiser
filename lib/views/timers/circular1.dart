@@ -1,13 +1,13 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:paradeiser/models/unit.dart';
 import 'package:provider/provider.dart';
-import 'package:tuple/tuple.dart';
 
 import '../_util.dart';
 import '../../controllers/timer.dart';
-import '../widgets/stream_listenable_adapter.dart';
 
 class CircularTimer1 extends StatefulWidget {
   final double circleThickness;
@@ -23,55 +23,96 @@ class CircularTimer1 extends StatefulWidget {
 }
 
 class _CircularTimer1State extends State<CircularTimer1> {
+  final _redrawCustomPainterNotifier = ChangeNotifier();
+  Timer _redrawCustomPainterTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _redrawCustomPainterTimer = Timer.periodic(Duration(milliseconds: 50), (timer) {
+      _redrawCustomPainterNotifier.notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _redrawCustomPainterTimer.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Consumer<TimerController>(
-          builder: (context, timerController, _) =>
-            StreamListenableAdapter(
-              stream: timerController.periodicUnitDurationStream(Duration(milliseconds: 100)),
-              initialData: timerController.currentUnitDurationTuple,
-              builder: (context, notifier) =>
-                CustomPaint(
-                  painter: CircularTimer1Painter(
-                    timerController: timerController,
-                    circleThickness: widget.circleThickness,
-                    repaint: notifier,
-                  ),
-                ),
-            ),
-        ),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            var diameter = min(constraints.biggest.width, constraints.biggest.height);
-            var padding = ((diameter + widget.circleThickness) - (diameter - widget.circleThickness) / sqrt(2)) / 2; // pad to constrain text to square inscribed in circle
-            padding *= widget.textPaddingFactor; // adjust padding
-            return Padding(
-              padding: EdgeInsets.all(padding),
-              child: FittedBox(
-                fit: BoxFit.fitWidth,
-                child: Consumer<TimerController>(
-                  builder: (context, timerController, _) =>
-                    StreamBuilder(
-                      stream: timerController.unitStream,
-                      builder: (__, ___) => StreamBuilder(
-                        initialData: timerController.currentUnitDurationTuple,
-                        stream: timerController.periodicUnitDurationStream(Duration(seconds: 1)),
-                        builder: (context, AsyncSnapshot<Tuple3<Duration, Duration, Duration>> snapshot) {
+    return Consumer<TimerController>(
+      builder: (_, timerController, __) =>
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            StreamBuilder(
+              stream: timerController.unitStateStream,
+                builder: (context, AsyncSnapshot<UnitState> snapshot) {
+                  if (snapshot.data == UnitState.overtime) {
+                    return StreamBuilder(
+                        initialData: timerController.currentUnitOvertimeDuration,
+                        stream: Stream.periodic(Duration(seconds: 1), (_) => timerController.currentUnitOvertimeDuration),
+                        builder: (context, AsyncSnapshot<Duration> snapshot) {
                           // TODO: fix initial snapshot data - bug shown in 021c9ae (bug-stream_builder-initial_snapshot_data)
-//                          print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
-                          return Text(formatDuration_mm_ss(snapshot.data.item1));
+                          //                          print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
+                          return Text("Overtime: ${formatDuration_mm_ss(snapshot.data)}");
                         }
-                      ),
+                    );
+                  } else {
+                    return Container(height: 0, width: 0);
+                  }
+                }
+            ),
+            Flexible(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CustomPaint(
+                    painter: CircularTimer1Painter(
+                      timerController: timerController,
+                      circleThickness: widget.circleThickness,
+                      repaint: _redrawCustomPainterNotifier,
                     ),
-                ),
+                  ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      var diameter = min(constraints.biggest.width, constraints.biggest.height);
+                      var padding = ((diameter + widget.circleThickness) - (diameter - widget.circleThickness) / sqrt(2)) / 2; // pad to constrain text to square inscribed in circle
+                      padding *= widget.textPaddingFactor; // adjust padding
+                      return Padding(
+                        padding: EdgeInsets.all(padding),
+                        child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          child: StreamBuilder(
+                            stream: timerController.unitStream,
+                            builder: (__, ___) => StreamBuilder(
+                              initialData: timerController.currentUnitRemainingDuration,
+                              stream: Stream.periodic(Duration(seconds: 1), (_) {
+                                if (timerController.currentUnitOvertimeDuration > Duration.zero) {
+                                  return timerController.nextUnitPlannedDuration;
+                                } else {
+                                  return timerController.currentUnitRemainingDuration;
+                                }
+                              }),
+                              builder: (context, AsyncSnapshot<Duration> snapshot) {
+                                // TODO: fix initial snapshot data - bug shown in 021c9ae (bug-stream_builder-initial_snapshot_data)
+      //                          print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
+                                return Text(formatDuration_mm_ss(snapshot.data));
+                              }
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-            );
-          }
-        )
-      ],
+            ),
+          ],
+        ),
     );
   }
 }

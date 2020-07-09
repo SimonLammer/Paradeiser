@@ -84,7 +84,7 @@ class _TimerFragmentState extends StateMVC<TimerFragment> {
                   icon: StreamBuilder(
                     stream: timerController.unitStream,
                     builder: (_, __) => StreamBuilder(
-                      stream: timerController.unitStateChangeStream,
+                      stream: timerController.unitStateStream,
                       builder: (___, ____) => timerController.isPauseable ? Icon(MdiIcons.pauseCircleOutline) : Icon(MdiIcons.playCircleOutline),
                     ),
                   ),

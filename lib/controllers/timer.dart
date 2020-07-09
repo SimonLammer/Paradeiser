@@ -1,18 +1,17 @@
 import 'dart:async';
 
 import 'package:mvc_pattern/mvc_pattern.dart';
-import 'package:tuple/tuple.dart';
 
 import '../models/unit.dart';
 import '../models/paradeiser_timer.dart';
 
 class TimerController extends ControllerMVC {
-  final ParadeiserTimer paradeiserTimer;
+  final ParadeiserTimer _paradeiserTimer;
 
   StreamSubscription _unitStateStreamSubscription;
 
-  TimerController(this.paradeiserTimer) {
-    _unitStateStreamSubscription = paradeiserTimer.unitStateStream.listen((newState) {
+  TimerController(this._paradeiserTimer) {
+    _unitStateStreamSubscription = _paradeiserTimer.unitStateStream.listen((newState) {
       print("TimerController - new state $newState");
     });
   }
@@ -24,48 +23,41 @@ class TimerController extends ControllerMVC {
     super.dispose();
   }
 
-  Stream<UnitState> get unitStateChangeStream => paradeiserTimer.unitStateStream;
-  Stream<Unit> get unitStream => paradeiserTimer.unitStream;
+  Stream<UnitState> get unitStateStream => _paradeiserTimer.unitStateStream;
+  Stream<Unit> get unitStream => _paradeiserTimer.unitStream;
 
-  Stream<Tuple3<Duration, Duration, Duration>> periodicUnitDurationStream(Duration period) => Stream.periodic(period, (_) {
-    if (period > Duration(milliseconds: 900))
-      print("TimerController.periodicUnitDurationStream - $currentUnitDurationTuple @ ${DateTime.now().toIso8601String()}");
-    return currentUnitDurationTuple;
-  });
+  Duration get currentUnitRemainingDuration => _paradeiserTimer.unit.remainingDuration;
+  Duration get currentUnitPassedDuration => _paradeiserTimer.unit.passedDuration;
+  Duration get currentUnitOvertimeDuration => _paradeiserTimer.unit.overtimeDuration;
+  Duration get currentUnitPlannedDuration => _paradeiserTimer.unit.plan.duration;
 
-  Duration get currentUnitPlannedDuration => paradeiserTimer.unit.plan.duration;
-  Duration get currentUnitRemainingDuration => paradeiserTimer.unit.remainingDuration;
-  Duration get currentUnitPassedDuration => paradeiserTimer.unit.passedDuration;
+  Duration get nextUnitPlannedDuration => _paradeiserTimer.nextUnit.plan.duration;
 
-  Tuple3<Duration, Duration, Duration> get currentUnitDurationTuple => Tuple3(
-    currentUnitRemainingDuration,
-    currentUnitPassedDuration,
-    currentUnitPlannedDuration,
-  );
+  double get progress => _paradeiserTimer.progress;
 
-  double get progress => paradeiserTimer.progress;
-
-  bool get isPauseable => paradeiserTimer.unit.isPauseable;
+  bool get isPauseable => _paradeiserTimer.unit.isPauseable;
 
   void reset() {
-    paradeiserTimer.reset(plans: paradeiserTimer.plans);
+    _paradeiserTimer.reset(plans: _paradeiserTimer.plans);
   }
 
   void start() {
-    paradeiserTimer.unit.start();
+    if (currentUnitOvertimeDuration > Duration.zero) {
+      _paradeiserTimer.moveToNextUnit();
+    }
+    _paradeiserTimer.unit.start();
   }
 
   void pause() {
-    paradeiserTimer.unit.pause();
+    _paradeiserTimer.unit.pause();
   }
 
   void skip() {
-    print("TimerController - skip() ${DateTime.now().toIso8601String()}");
-    paradeiserTimer.moveToNextUnit();
+    _paradeiserTimer.moveToNextUnit();
   }
 
   void toggle() {
-    if (paradeiserTimer.unit.state == UnitState.running) {
+    if (_paradeiserTimer.unit.state == UnitState.running) {
       pause();
     } else {
       start();
