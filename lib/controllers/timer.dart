@@ -4,7 +4,6 @@ import 'package:mvc_pattern/mvc_pattern.dart';
 import 'package:tuple/tuple.dart';
 
 import '../models/unit.dart';
-import '../models/unit_plan.dart';
 import '../models/paradeiser_timer.dart';
 
 class TimerController extends ControllerMVC {

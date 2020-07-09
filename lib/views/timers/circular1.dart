@@ -59,8 +59,11 @@ class _CircularTimer1State extends State<CircularTimer1> {
                       builder: (__, ___) => StreamBuilder(
                         initialData: timerController.currentUnitDurationTuple,
                         stream: timerController.periodicUnitDurationStream(Duration(seconds: 1)),
-                        builder: (context, AsyncSnapshot<Tuple3<Duration, Duration, Duration>> snapshot) {print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
-                        return Text(DateTime.now().toIso8601String());} //formatDuration_mm_ss(snapshot.data.item1));}
+                        builder: (context, AsyncSnapshot<Tuple3<Duration, Duration, Duration>> snapshot) {
+                          // TODO: fix initial snapshot data - bug shown in 021c9ae (bug-stream_builder-initial_snapshot_data)
+//                          print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
+                          return Text(formatDuration_mm_ss(snapshot.data.item1));
+                        }
                       ),
                     ),
                 ),
