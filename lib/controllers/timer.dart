@@ -8,7 +8,7 @@ import '../models/unit_plan.dart';
 import '../models/paradeiser_timer.dart';
 
 class TimerController extends ControllerMVC {
-  final ParadeiserTimer paradeiserTimer;
+  final ParadeiserTimer paradeiserTimer; // TODO: make private
 
   StreamSubscription _unitStateStreamSubscription;
 

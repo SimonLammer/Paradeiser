@@ -29,19 +29,23 @@ class _CircularTimer1State extends State<CircularTimer1> {
       fit: StackFit.expand,
       children: [
         Consumer<TimerController>(
-          builder: (context, timerController, _) =>
-            StreamListenableAdapter(
-              stream: timerController.periodicUnitDurationStream(Duration(milliseconds: 100)),
-              initialData: timerController.currentUnitDurationTuple,
-              builder: (context, notifier) =>
-                CustomPaint(
-                  painter: CircularTimer1Painter(
-                    timerController: timerController,
-                    circleThickness: widget.circleThickness,
-                    repaint: notifier,
-                  ),
+          builder: (_, timerController, __) =>
+            StreamBuilder(
+              stream: timerController.unitStream,
+              builder: (_, snapshot) =>
+                StreamListenableAdapter(
+                  stream: timerController.periodicUnitDurationStream(Duration(milliseconds: 100)),
+                  initialData: timerController.currentUnitDurationTuple,
+                  builder: (context, notifier) =>
+                    CustomPaint(
+                      painter: CircularTimer1Painter(
+                        timerController: timerController,
+                        circleThickness: widget.circleThickness,
+                        repaint: notifier,
+                      ),
+                    ),
                 ),
-            ),
+            )
         ),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -56,12 +60,13 @@ class _CircularTimer1State extends State<CircularTimer1> {
                   builder: (context, timerController, _) =>
                     StreamBuilder(
                       stream: timerController.unitStream,
-                      builder: (__, ___) => StreamBuilder(
-                        initialData: timerController.currentUnitDurationTuple,
+                      builder: (__, ___) {print("CTS - new unit @ ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple} ${timerController.currentUnitDurationTuple.hashCode}");
+                      return StreamBuilder(
+//                        initialData: timerController.currentUnitDurationTuple,
                         stream: timerController.periodicUnitDurationStream(Duration(seconds: 1)),
-                        builder: (context, AsyncSnapshot<Tuple3<Duration, Duration, Duration>> snapshot) {print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple}; data: ${snapshot.data}");
-                        return Text(DateTime.now().toIso8601String());} //formatDuration_mm_ss(snapshot.data.item1));}
-                      ),
+                        builder: (context, AsyncSnapshot<Tuple3<Duration, Duration, Duration>> snapshot) {print("CTS - building timer text at ${DateTime.now().toIso8601String()}; tuple: ${timerController.currentUnitDurationTuple} ${timerController.currentUnitDurationTuple.hashCode}; data: ${snapshot.data} ${snapshot.data.hashCode}");
+                          return Text(DateTime.now().toIso8601String());} //formatDuration_mm_ss(snapshot.data.item1));}
+                      );},
                     ),
                 ),
               ),
