@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:mvc_pattern/mvc_pattern.dart';
+
 import 'timer-fragment.dart';
 import 'todo_list-fragment.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends AppMVC {
   final mainFragments = {
     '/': TimerFragment(),
     '/todo_list': TodoListFragment()
