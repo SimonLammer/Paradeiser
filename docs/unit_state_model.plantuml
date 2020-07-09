@@ -1,0 +1,19 @@
+@startuml
+
+title Unit State Model
+
+hide empty description
+
+[*] -> initial
+initial -> running : start
+initial --> canceled : cancel
+
+running --> paused : pause
+running -> canceled : cancel
+running -> overtime : (time passed)
+
+paused -> running : start
+
+overtime -> finished : stop
+
+@enduml
