@@ -21,7 +21,7 @@ class MyApp extends AppMVC {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       navigatorKey: fragmentNavigatorKey,
-      initialRoute: '/',
+      initialRoute: '/todo_list', // TODO: reset to '/' when finished debugging/implementing todo list
       onGenerateRoute: (RouteSettings settings) => MaterialPageRoute(
         builder: (_) => mainFragments[settings.name],
         settings: settings,
