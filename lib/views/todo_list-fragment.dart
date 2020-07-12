@@ -27,8 +27,19 @@ class _TodoListFragmentState extends State<TodoListFragment> {
           Expanded(
             child: ReorderableList(
               onReorder: (Key n, Key o) {
-                print("onReorder($n, $o)");
-                return false;
+                int oldIndex = keys.indexOf(o);
+                int newIndex = keys.indexOf(n);
+                print("onReorder($n, $o) ; $newIndex <-> $oldIndex");
+                setState(() {
+                  dynamic tmp = keys[oldIndex];
+                  keys[oldIndex] = keys[newIndex];
+                  keys[newIndex] = tmp;
+                  tmp = alphabetList[oldIndex];
+                  alphabetList[oldIndex] = alphabetList[newIndex];
+                  alphabetList[newIndex] = tmp;
+                  print("setState $newIndex <-> $oldIndex");
+                });
+                return true;
               },
               onReorderDone: (Key key) {
                 print("onReorderDone($key)");
