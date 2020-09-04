@@ -1,6 +1,6 @@
 enum UnitType {
   work,
-  pause, // for breaks
+  pause,
 }
 
 class UnitPlan {
